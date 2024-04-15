@@ -1,5 +1,5 @@
 pipeline {
-  agent {label 'windows'} // Thay đổi từ 'linux' thành 'windows'
+  agent { label 'linux' }
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
@@ -9,23 +9,23 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        bat '.\\jenkins\\build.bat' // Thay đổi từ 'sh' thành 'bat' và sửa đường dẫn file
+        sh 'docker build -t darinpope/dp-alpine:latest .'
       }
     }
     stage('Login') {
       steps {
-        bat 'echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin' // Thay đổi từ 'sh' thành 'bat' và sử dụng cú pháp biến môi trường của Windows
+        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
       }
     }
     stage('Push') {
       steps {
-        bat '.\\jenkins\\push.bat' // Thay đổi từ 'sh' thành 'bat' và sửa đường dẫn file
+        sh 'docker push darinpope/dp-alpine:latest'
       }
     }
   }
   post {
     always {
-      bat '.\\jenkins\\logout.bat' // Thay đổi từ 'sh' thành 'bat' và sửa đường dẫn file
+      sh 'docker logout'
     }
   }
 }
