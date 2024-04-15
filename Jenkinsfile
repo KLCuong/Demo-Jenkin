@@ -1,31 +1,25 @@
 pipeline {
-  agent { label 'linux' }
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
-  }
-  environment {
-    DOCKERHUB_CREDENTIALS = credentials('Cuong-dockerHub')
-  }
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker build -t darinpope/dp-alpine:latest .'
-      }
+  agent any
+
+ stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'Cuong-dockerHub') {
+                        def appImage = docker.build("cuongkhongle/demo-jenkins:latest", "dockerfile")
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'Cuong-dockerHub') {
+                        docker.image("cuongkhongle/demo-jenkins:latest").push()
+                    }
+                }
+            }
+        }
     }
-    stage('Login') {
-      steps {
-        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-      }
-    }
-    stage('Push') {
-      steps {
-        sh 'docker push darinpope/dp-alpine:latest'
-      }
-    }
-  }
-  post {
-    always {
-      sh 'docker logout'
-    }
-  }
 }
